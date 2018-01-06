@@ -86,7 +86,7 @@ logits = LeNet(x)
 pred_val = tf.argmax(logits, 1)
 pred_softmax = tf.nn.softmax(logits)
 def Recognize():
-    image = mpimg.imread("./images/imageDetected.jpg")
+    image = mpimg.imread("./imageDetected.jpg")
     test_images = []
     image = cv2.resize(image, (32, 32), interpolation = cv2.INTER_AREA)
     image = preprocess_image(image)

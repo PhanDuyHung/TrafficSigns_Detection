@@ -93,13 +93,10 @@ int main(int argc, wchar_t* argv[]){
 			isHasTraffic = true;
 
 			Mat imgTraffic = MyDetecter::CutTrafficSign(frame, traffic);
-			//imshow("test", imgTraffic);
-			imwrite("./images/imageDetected.jpg", imgTraffic);
+			imwrite("imageDetected.jpg", imgTraffic);
 
 			//======RECOGNIZE BY PYTHON==========
 			PyObject*pyFunc = PyObject_GetAttrString(pyModule, "Recognize");
-			PyErr_Occurred();
-			PyErr_Print();
 			PyObject*pyResult = PyObject_CallObject(pyFunc, NULL);
 			int img_label = (int)PyFloat_AsDouble(pyResult);
 
