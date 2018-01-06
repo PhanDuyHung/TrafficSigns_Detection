@@ -14,7 +14,7 @@ using namespace std;
 //standard 
 #define SCARLAR_LOWER_RED_1 0,50,50//160, 200, 160
 #define SCARLAR_UPPER_RED_1 10,255,255//179, 255, 255
-#define SCARLAR_LOWER_RED_2 170,50,50//160, 200, 160
+#define SCARLAR_LOWER_RED_2 160,50,50//160, 200, 160
 #define SCARLAR_UPPER_RED_2 180,255,255//179, 255, 255
 
 #define SCARLAR_LOWER_BLUE 75, 128, 128//170, 0, 0//75, 128, 128
@@ -63,10 +63,10 @@ class MyDetecter
 {
 	static vector<string> Responses;
 	static double Angle(Point pt1, Point pt2, Point pt0);
-	static void FindSquares(const Mat& img, const Mat& imgRed, const Mat& imgBlue, const Mat& imgYellow, vector<TrafficSign>& trafficSigns);
-	static void FindTriangles(const Mat& img, const Mat& imgRed, const Mat& imgBlue, const Mat& imgYellow, vector<TrafficSign>& trafficSigns);
+	static void FindSquares(const Mat& img, const  vector<Point>&contour, vector<TrafficSign>& trafficSigns);
+	static void FindTriangles(const Mat& img, const vector<Point>&contour, vector<TrafficSign>& trafficSigns);
 	static void FindCircles(const Mat& bw, vector<TrafficSign>& trafficSigns);
-	static void FindEllipses(const Mat& img,const Mat& imgRed, const Mat& imgBlue, const Mat& imgYellow, vector<TrafficSign>& trafficSigns);
+	static void FindEllipses(const Mat& img, const vector<Point>&contour, vector<TrafficSign>& trafficSigns);
 	
 public:
 	~MyDetecter();
