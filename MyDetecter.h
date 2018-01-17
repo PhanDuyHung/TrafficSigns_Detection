@@ -1,4 +1,5 @@
 #pragma once
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -31,7 +32,7 @@ using namespace std;
 
 #define RATIO 1.8
 #define SCALAR_SOLID 0, 255, 0
-#define THICKNESS 2
+#define THICKNESS 1
 
 #define MINIMUM_SIZE 20
 class TrafficSign
@@ -72,7 +73,7 @@ public:
 	~MyDetecter();
 	static void LoadFileSignNames(const string& filename);
 	static void DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& trafficSigns);
-	static void DrawTrafficSigns( Mat& imgSrc,  vector<TrafficSign>& trafficSigns);
+	static void DrawTrafficSigns(Mat& imgSrc, TrafficSign traffic);
 	static Mat CutTrafficSign(const Mat& imgSrc, TrafficSign&);
 	static void SetLabel(Mat&, const TrafficSign&);
 };

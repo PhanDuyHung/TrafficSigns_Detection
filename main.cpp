@@ -20,8 +20,8 @@ void PreSave(vector<Frame>& frameOutput)
 	{
 		int count = 0;
 		int minindex = (i - 5 > 0) ? i - 5 : 0;
-		int maxindex = (i + 5 < size-1) ? i + 5 : size-1;
-		TrafficSign arr[11]; 
+		int maxindex = (i + 5 < size - 1) ? i + 5 : size - 1;
+		TrafficSign arr[11];
 		int freq[11];
 		for (int j = minindex, k = 0; j <= maxindex; j++)
 		{
@@ -30,9 +30,9 @@ void PreSave(vector<Frame>& frameOutput)
 		}
 		if (count == 1) //chi xuat hien 1 lan -> replace vs bien bao khac gan nhat
 		{
-			cout << frameOutput[i].id<<"\n";
+			cout << frameOutput[i].id << "\n";
 			//tìm biển báo có tần số xuất hiện nhiều nhất
-			for (int j = 0; j<11; j++)
+			for (int j = 0; j < 11; j++)
 			{
 				int f = 0;
 				for (int p = 1; p < 10; p++)
@@ -91,10 +91,10 @@ void SaveFileOutput(const string& filename, const vector<Frame>& frameOutput)
 		Point p0, p1;
 		if (frameOutput[i].traffic.getId() == -1) //frame hasn't traffic sign
 		{
-			file << frameOutput[i].id << "\t" << -1<<"\n";
+			file << frameOutput[i].id << "\t" << -1 << "\n";
 			continue;
 		}
-	
+
 		length = frameOutput[i].traffic.getLength();
 		p0 = Point(frameOutput[i].traffic.getCenTer().x - length / 2, frameOutput[i].traffic.getCenTer().y - length / 2);
 		p1 = Point(frameOutput[i].traffic.getCenTer().x + length / 2, frameOutput[i].traffic.getCenTer().y + length / 2);
@@ -106,11 +106,11 @@ void SaveFileOutput(const string& filename, const vector<Frame>& frameOutput)
 
 int main(int argc, wchar_t* argv[]){
 
-	vector<TrafficSign> traffiSigns;
+	vector<TrafficSign> trafficSigns;
 
 	/*Mat img = imread("test_images\\stop.jpg");
-	MyDetecter::DetectTrafficSigns(img, traffiSigns);
-	MyDetecter::DrawTrafficSigns(img, traffiSigns);
+	MyDetecter::DetectTrafficSigns(img, trafficSigns);
+	MyDetecter::DrawTrafficSigns(img, trafficSigns);
 	imshow("square", img);
 	waitKey(0);*/
 
@@ -122,11 +122,16 @@ int main(int argc, wchar_t* argv[]){
 
 	//Import Module
 	PyObject* pyModule = PyImport_ImportModule("TrafficReg");
+	PyErr_Occurred();
+	PyErr_Print();
 
 	/*================================================*/
-	
-	
-	VideoCapture cap; 
+
+	int label_require;
+	cout << "\nLabel traffic sign require: ";
+	cin >> label_require;
+
+	VideoCapture cap;
 	while (1)
 	{
 		string videopath;
@@ -142,20 +147,24 @@ int main(int argc, wchar_t* argv[]){
 	}
 
 	vector<Frame> frameOutput;
-	
-	int idFrame = 0; 
+	float width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
+	float height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
+	VideoWriter videoOut("NII.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(width, height));
+
+	int idFrame = 0;
+
 	while (1)
 	{
 		Mat frame;
-		cap >> frame; // get a new frame from camera
+		cap >> frame; // get a new frame from video
 		if (!frame.data) break;
 
 		Frame f; f.id = idFrame;
-		bool isHasTraffic = false;
-		MyDetecter::DetectTrafficSigns(frame, traffiSigns);
-		for each (TrafficSign traffic in traffiSigns)
+		//bool isHasTraffic = false;
+		MyDetecter::DetectTrafficSigns(frame, trafficSigns);
+		for each (TrafficSign traffic in trafficSigns)
 		{
-			isHasTraffic = true;
+			//isHasTraffic = true;
 
 			Mat imgTraffic = MyDetecter::CutTrafficSign(frame, traffic);
 			imwrite("imageDetected.jpg", imgTraffic);
@@ -165,35 +174,43 @@ int main(int argc, wchar_t* argv[]){
 			PyObject*pyResult = PyObject_CallObject(pyFunc, NULL);
 			int img_label = (int)PyFloat_AsDouble(pyResult);
 
-			traffic.setId(img_label);
-			MyDetecter::SetLabel(frame, traffic);
+			if (img_label == label_require)
+			{
+				traffic.setId(img_label);
+				MyDetecter::SetLabel(frame, traffic);
+				MyDetecter::DrawTrafficSigns(frame, traffic);
 
-			/*Push output*/
-			f.traffic = traffic;
-			f.label_traffic = img_label;
-			frameOutput.push_back(f);
-
-			PyErr_Occurred();
-			PyErr_Print();
+				/*Push output*/
+				f.traffic = traffic;
+				f.label_traffic = img_label;
+				frameOutput.push_back(f);
+			}
 		}
+		trafficSigns.clear();
 
-		if (!isHasTraffic)
+		/*if (!isHasTraffic)
 		{
 			f.traffic.setId(-1);
 			frameOutput.push_back(f);
-		}
+		}*/
 
-		MyDetecter::DrawTrafficSigns(frame, traffiSigns);
+		//MyDetecter::DrawTrafficSigns(frame, trafficSigns,label_require);
 
 		imshow("Traffic Sign", frame);
+
+		videoOut.write(frame);
 		if (waitKey(1) >= 0) break;
 
 		idFrame++;
 	}
 
 	cout << "\nWrite output file!";
-	PreSave(frameOutput);
+	//PreSave(frameOutput);
+
+	videoOut.release();
+
 	SaveFileOutput("output.txt", frameOutput);
+	
 	cout << "\nSaved!";
 
 	system("pause");

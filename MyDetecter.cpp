@@ -43,7 +43,7 @@ void MyDetecter::FindEllipses(const Mat& img, const vector<Point>&contour, vecto
 		int length = (int)(temp.size.width < temp.size.height) ? (int)temp.size.height : (int)temp.size.width;
 		traffic.setLength(length);
 
-		if (length > MINIMUM_SIZE)
+		if (length >= MINIMUM_SIZE)
 			//push into trafficSigns
 			trafficSigns.push_back(traffic);
 	}
@@ -102,7 +102,7 @@ void MyDetecter::FindSquares(const Mat& img, const  vector<Point>&contour, vecto
 			int length = approx[3].x - approx[0].x;
 			traffic.setLength(length);
 
-			if (length > MINIMUM_SIZE)
+			if (length >= MINIMUM_SIZE)
 				//push triangle_center into trafficSigns
 				trafficSigns.push_back(traffic);
 		}
@@ -157,7 +157,7 @@ void MyDetecter::FindTriangles(const Mat& img, const  vector<Point>&contour, vec
 		traffic.setCenTer(center);
 		traffic.setLength((int)len);
 
-		if (len > MINIMUM_SIZE)
+		if (len >= MINIMUM_SIZE)
 			//push triangle_center into trafficSigns
 			trafficSigns.push_back(traffic);
 	}
@@ -260,25 +260,28 @@ void MyDetecter::DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& traf
 	}
 }
 
-void MyDetecter::DrawTrafficSigns(Mat& imgSrc, vector<TrafficSign>& trafficSigns)
+void MyDetecter::DrawTrafficSigns(Mat& imgSrc,TrafficSign traffic)
 {
-	for each (TrafficSign traffic in trafficSigns)
+	//for each (TrafficSign traffic in trafficSigns)
 	{
-		Point center = traffic.getCenTer();
-		int length = traffic.getLength();
-		//tìm tọa độ 4 đỉnh A B C D
-		Point A, B, C, D;
-		A = Point(center.x - length / 2, center.y - length / 2);
-		B = Point(center.x + length / 2, center.y - length / 2);
-		C = Point(center.x + length / 2, center.y + length / 2);
-		D = Point(center.x - length / 2, center.y + length / 2);
-		//Draw square
-		line(imgSrc, A, B, Scalar(SCALAR_SOLID), THICKNESS);
-		line(imgSrc, B, C, Scalar(SCALAR_SOLID), THICKNESS);
-		line(imgSrc, C, D, Scalar(SCALAR_SOLID), THICKNESS);
-		line(imgSrc, D, A, Scalar(SCALAR_SOLID), THICKNESS);
+		//if (traffic.getId() == label_require)
+		{
+			Point center = traffic.getCenTer();
+			int length = traffic.getLength();
+			//tìm tọa độ 4 đỉnh A B C D
+			Point A, B, C, D;
+			A = Point(center.x - length / 2, center.y - length / 2);
+			B = Point(center.x + length / 2, center.y - length / 2);
+			C = Point(center.x + length / 2, center.y + length / 2);
+			D = Point(center.x - length / 2, center.y + length / 2);
+			//Draw square
+			line(imgSrc, A, B, Scalar(SCALAR_SOLID), THICKNESS);
+			line(imgSrc, B, C, Scalar(SCALAR_SOLID), THICKNESS);
+			line(imgSrc, C, D, Scalar(SCALAR_SOLID), THICKNESS);
+			line(imgSrc, D, A, Scalar(SCALAR_SOLID), THICKNESS);
+		}
 	}
-	trafficSigns.clear();
+	//trafficSigns.clear();
 }
 
 Mat MyDetecter::CutTrafficSign(const Mat& imgSrc, TrafficSign& traffic) {
