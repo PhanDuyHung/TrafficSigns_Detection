@@ -87,7 +87,7 @@ void SaveFileOutput(const string& filename, const vector<Frame>& frameOutput)
 	file << n << "\n";
 	for (int i = 0; i < n; i++)
 	{
-		int id, length;
+		int id;
 		Point p0, p1;
 		if (frameOutput[i].traffic.getId() == -1) //frame hasn't traffic sign
 		{
@@ -95,9 +95,10 @@ void SaveFileOutput(const string& filename, const vector<Frame>& frameOutput)
 			continue;
 		}
 
-		length = frameOutput[i].traffic.getLength();
-		p0 = Point(frameOutput[i].traffic.getCenTer().x - length / 2, frameOutput[i].traffic.getCenTer().y - length / 2);
-		p1 = Point(frameOutput[i].traffic.getCenTer().x + length / 2, frameOutput[i].traffic.getCenTer().y + length / 2);
+		//length = frameOutput[i].traffic.getLength();
+		Size size = frameOutput[i].traffic.getSize();
+		p0 = Point(frameOutput[i].traffic.getCenTer().x - size.width / 2, frameOutput[i].traffic.getCenTer().y - size.height / 2);
+		p1 = Point(frameOutput[i].traffic.getCenTer().x + size.width / 2, frameOutput[i].traffic.getCenTer().y + size.height / 2);
 		id = frameOutput[i].traffic.getId();
 		file << frameOutput[i].id << "\t" << id << "\t" << p0.x << "\t" << p0.y << "\t" << p1.x << "\t" << p1.y << "\n";
 	}
@@ -107,12 +108,6 @@ void SaveFileOutput(const string& filename, const vector<Frame>& frameOutput)
 int main(int argc, wchar_t* argv[]){
 
 	vector<TrafficSign> trafficSigns;
-
-	/*Mat img = imread("test_images\\stop.jpg");
-	MyDetecter::DetectTrafficSigns(img, trafficSigns);
-	MyDetecter::DrawTrafficSigns(img, trafficSigns);
-	imshow("square", img);
-	waitKey(0);*/
 
 	MyDetecter::LoadFileSignNames("./lenet/lenet/signnames.txt");
 
@@ -147,9 +142,9 @@ int main(int argc, wchar_t* argv[]){
 	}
 
 	vector<Frame> frameOutput;
-	float width = cap.get(CV_CAP_PROP_FRAME_WIDTH);
-	float height = cap.get(CV_CAP_PROP_FRAME_HEIGHT);
-	VideoWriter videoOut("NII.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(width, height));
+	int width = (int)cap.get(CV_CAP_PROP_FRAME_WIDTH);
+	int height = (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT);
+	VideoWriter videoOut("NII.avi", CV_FOURCC('M', 'J', 'P', 'G'), 60, Size(width, height));
 
 	int idFrame = 0;
 
@@ -174,7 +169,7 @@ int main(int argc, wchar_t* argv[]){
 			PyObject*pyResult = PyObject_CallObject(pyFunc, NULL);
 			int img_label = (int)PyFloat_AsDouble(pyResult);
 
-			if (img_label == label_require)
+			if (img_label == label_require || label_require == -1)
 			{
 				traffic.setId(img_label);
 				MyDetecter::SetLabel(frame, traffic);
@@ -213,6 +208,6 @@ int main(int argc, wchar_t* argv[]){
 	
 	cout << "\nSaved!";
 
-	system("pause");
+	//system("pause");
 	return 0;
 }

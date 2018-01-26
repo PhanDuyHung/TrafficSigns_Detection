@@ -40,10 +40,10 @@ void MyDetecter::FindEllipses(const Mat& img, const vector<Point>&contour, vecto
 
 		TrafficSign traffic;
 		traffic.setCenTer(temp.center);
-		int length = (int)(temp.size.width < temp.size.height) ? (int)temp.size.height : (int)temp.size.width;
-		traffic.setLength(length);
+		//int length = (int)(temp.size.width < temp.size.height) ? (int)temp.size.height : (int)temp.size.width;
+		traffic.setSize(temp.size);
 
-		if (length >= MINIMUM_SIZE)
+		if (temp.size.width >= MINIMUM_SIZE && temp.size.height >= MINIMUM_SIZE)
 			//push into trafficSigns
 			trafficSigns.push_back(traffic);
 	}
@@ -99,10 +99,11 @@ void MyDetecter::FindSquares(const Mat& img, const  vector<Point>&contour, vecto
 			//figure out square_center
 			Point center = Point((approx[2].x + approx[0].x) / 2, (approx[2].y + approx[0].y) / 2);
 			traffic.setCenTer(center);
-			int length = approx[3].x - approx[0].x;
-			traffic.setLength(length);
+			int width = approx[1].x - approx[0].x;
+			int height = approx[3].x - approx[0].x;
+			traffic.setSize(Size(width,height));
 
-			if (length >= MINIMUM_SIZE)
+			if (traffic.getSize().width >= MINIMUM_SIZE && traffic.getSize().height >= MINIMUM_SIZE)
 				//push triangle_center into trafficSigns
 				trafficSigns.push_back(traffic);
 		}
@@ -133,31 +134,31 @@ void MyDetecter::FindTriangles(const Mat& img, const  vector<Point>&contour, vec
 		double ab = sqrt((A.x - B.x)*(A.x - B.x) + (A.y - B.y)*(A.y - B.y));
 		double bc = sqrt((B.x - C.x)*(B.x - C.x) + (B.y - C.y)*(B.y - C.y));
 		double ac = sqrt((A.x - C.x)*(A.x - C.x) + (A.y - C.y)*(A.y - C.y));
-		double len;
+		double width, height;
 		Point center, D;
 		if (abs(bc - ac) < 1) { //tam giac can tai C
 			D = Point((A.x + B.x) / 2, (A.y + B.y) / 2);
 			center = Point((C.x + D.x) / 2, (C.y + D.y) / 2);
-			len = sqrt((C.x - D.x)*(C.x - D.x) + (C.y - D.y)*(C.y - D.y));
-			if (ab > len) len = ab;
+			height = sqrt((C.x - D.x)*(C.x - D.x) + (C.y - D.y)*(C.y - D.y));
+			width = ab;
 		}
 		else if (abs(bc - ab) < 1) {//tam giac can tai B
 			D = Point((A.x + C.x) / 2, (A.y + C.y) / 2);
 			center = Point((B.x + D.x) / 2, (B.y + D.y) / 2);
-			len = sqrt((B.x - D.x)*(B.x - D.x) + (B.y - D.y)*(B.y - D.y));
-			if (ac > len) len = ac;
+			height = sqrt((B.x - D.x)*(B.x - D.x) + (B.y - D.y)*(B.y - D.y));
+			width = ac;
 		}
 		else  { //if (abs(ab - ac) < 1)
 			D = Point((C.x + B.x) / 2, (C.y + B.y) / 2);
 			center = Point((A.x + D.x) / 2, (A.y + D.y) / 2);
-			len = sqrt((A.x - D.x)*(A.x - D.x) + (A.y - D.y)*(A.y - D.y));
-			if (bc > len) len = bc;
+			height = sqrt((A.x - D.x)*(A.x - D.x) + (A.y - D.y)*(A.y - D.y));
+			width = bc;
 		}
 
 		traffic.setCenTer(center);
-		traffic.setLength((int)len);
+		traffic.setSize(Size((int)width,(int)height));
 
-		if (len >= MINIMUM_SIZE)
+		if (traffic.getSize().width >= MINIMUM_SIZE && traffic.getSize().height >= MINIMUM_SIZE)
 			//push triangle_center into trafficSigns
 			trafficSigns.push_back(traffic);
 	}
@@ -169,53 +170,55 @@ void MyDetecter::DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& traf
 	Mat img;
 	cvtColor(imgSrc, img, CV_BGR2HSV);
 
-	Mat imgRed, maskRed1, maskRed2, imgBlue, imgYellow, imgBlack, imgWhilte;
+	Mat imgRed, maskRed1, maskRed2, maskRed3, imgBlue, imgYellow, imgBlack, imgWhite, imgColor;
 
 	inRange(img, Scalar(SCARLAR_LOWER_RED_1), Scalar(SCARLAR_UPPER_RED_1), maskRed1);
 	inRange(img, Scalar(SCARLAR_LOWER_RED_2), Scalar(SCARLAR_UPPER_RED_2), maskRed2);
-	cv::add(maskRed1, maskRed2, imgRed);
-	threshold(imgRed, imgRed, 127, 255, CV_THRESH_BINARY);
+	//inRange(img, Scalar(SCARLAR_LOWER_RED_3), Scalar(SCARLAR_UPPER_RED_3), maskRed3);
+	add(maskRed1, maskRed2, imgRed);
+	//threshold(imgRed, imgRed, 127, 255, CV_THRESH_BINARY);
+	//add(imgRed, maskRed3, imgRed);
 
-	inRange(img, Scalar(SCARLAR_LOWER_YELLOW), Scalar(SCARLAR_UPPER_YELLOW), imgYellow);
-	threshold(imgYellow, imgYellow, 127, 255, CV_THRESH_BINARY);
-
-
+	//inRange(img, Scalar(SCARLAR_LOWER_YELLOW), Scalar(SCARLAR_UPPER_YELLOW), imgYellow);
 	inRange(img, Scalar(SCARLAR_LOWER_BLUE), Scalar(SCARLAR_UPPER_BLUE), imgBlue);
-	threshold(imgBlue, imgBlue, 127, 255, CV_THRESH_BINARY);
+	//threshold(imgBlue, imgBlue, 127, 255, CV_THRESH_BINARY);
 
+	inRange(img, Scalar(SCARLAR_LOWER_WHITE), Scalar(SCARLAR_UPPER_WHITE), imgWhite);
+	//imshow("white", imgWhite);
+	//threshold(imgWhite, imgWhite, 127, 255, CV_THRESH_BINARY);
+	
+	//inRange(img, Scalar(SCARLAR_LOWER_BLACK), Scalar(SCARLAR_UPPER_BLACK), imgBlack);
+
+
+	add(imgRed, imgBlue, imgColor);
+	//add(imgColor, imgYellow, imgColor);
+	add(imgColor, imgWhite, imgColor);
+	//add(imgColor, imgBlack, imgColor);
+
+	threshold(imgColor, imgColor, 127, 255, CV_THRESH_BINARY);
+	
 	// find contours and store them all as a list
 	vector<vector<Point> >contours, contours_temp;
-	findContours(imgRed, contours_temp, RETR_LIST, CHAIN_APPROX_SIMPLE);
-	for each (vector<Point> contour in contours_temp)
-	{
-		contours.push_back(contour);
-	}
-	findContours(imgBlue, contours_temp, RETR_LIST, CHAIN_APPROX_SIMPLE);
-	for each (vector<Point> contour in contours_temp)
-	{
-		contours.push_back(contour);
-	}
-	findContours(imgYellow, contours_temp, RETR_LIST, CHAIN_APPROX_SIMPLE);
-	for each (vector<Point> contour in contours_temp)
-	{
-		contours.push_back(contour);
-	}
+	findContours(imgColor, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
 
 	for each (vector<Point> contour in contours)
 	{
 		/*=============SQUARE=============*/
-		FindSquares(img, contour, trafficSigns);
+		//FindSquares(img, contour, trafficSigns);
 
 		/*===========TRIANGLE=============*/
-		FindTriangles(img, contour, trafficSigns);
+		//FindTriangles(img, contour, trafficSigns);
 
 		/*============CIRCLE===============*/
 		FindEllipses(img, contour, trafficSigns);
 	}
+	if (trafficSigns.empty()) return;
+
 	//sap xep theo thu giam dan
 	stack<int> s;
 	int left = 0, right = (int)trafficSigns.size() - 1;
 	s.push(left); s.push(right);
+	
 	while (!s.empty())
 	{
 		right = s.top(); s.pop();
@@ -223,8 +226,17 @@ void MyDetecter::DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& traf
 		int i = left, j = right, k = (i + j) / 2;
 		while (i <= j)
 		{
-			while (trafficSigns[i].getLength() < trafficSigns[k].getLength()) i++;
-			while (trafficSigns[j].getLength() > trafficSigns[k].getLength()) j--;
+			int length_i = trafficSigns[i].getSize().width + trafficSigns[i].getSize().height;
+			int length_j = trafficSigns[j].getSize().width + trafficSigns[j].getSize().height;
+			int length_k = trafficSigns[k].getSize().width + trafficSigns[k].getSize().height;
+			while (length_i < length_k) {
+				i++;
+				length_i = trafficSigns[i].getSize().width + trafficSigns[i].getSize().height;
+			}
+			while (length_j > length_k) {
+				j--;
+				length_j = trafficSigns[j].getSize().width + trafficSigns[j].getSize().height;
+			}
 			if (i <= j)
 			{
 				TrafficSign t = trafficSigns[i];
@@ -244,11 +256,14 @@ void MyDetecter::DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& traf
 	//xoa nhung duong tron nam trong duong tron khac
 	for (int i = (int)trafficSigns.size() - 1; i > 0; --i) {
 		Point center_i = trafficSigns[i].getCenTer();
-		float radius_i = (float)trafficSigns[i].getLength() / 2;
+		//float radius_i = (float)trafficSigns[i].getLength() / 2;
+		int radius_i = ((trafficSigns[i].getSize().width > trafficSigns[i].getSize().height) ? trafficSigns[i].getSize().width : trafficSigns[i].getSize().height)/2;
+		
 
 		for (int j = i - 1; j >= 0; --j){
 			Point center_j = trafficSigns[j].getCenTer();
-			float radius_j = (float)trafficSigns[j].getLength() / 2;
+			int radius_j = ((trafficSigns[j].getSize().width > trafficSigns[j].getSize().height) ? trafficSigns[j].getSize().width : trafficSigns[j].getSize().height) / 2;
+			//float radius_j = (float)trafficSigns[j].getLength() / 2;
 
 			double d = sqrt((center_i.x - center_j.x)*(center_i.x - center_j.x) + (center_i.y - center_j.y)*(center_i.y - center_j.y));
 			if (d < radius_i + radius_j)
@@ -267,13 +282,13 @@ void MyDetecter::DrawTrafficSigns(Mat& imgSrc,TrafficSign traffic)
 		//if (traffic.getId() == label_require)
 		{
 			Point center = traffic.getCenTer();
-			int length = traffic.getLength();
+			Size size = traffic.getSize();
 			//tìm tọa độ 4 đỉnh A B C D
 			Point A, B, C, D;
-			A = Point(center.x - length / 2, center.y - length / 2);
-			B = Point(center.x + length / 2, center.y - length / 2);
-			C = Point(center.x + length / 2, center.y + length / 2);
-			D = Point(center.x - length / 2, center.y + length / 2);
+			A = Point(center.x - size.width / 2, center.y - size.height / 2);
+			B = Point(center.x + size.width / 2, center.y - size.height / 2);
+			C = Point(center.x + size.width / 2, center.y + size.height / 2);
+			D = Point(center.x - size.width / 2, center.y + size.height / 2);
 			//Draw square
 			line(imgSrc, A, B, Scalar(SCALAR_SOLID), THICKNESS);
 			line(imgSrc, B, C, Scalar(SCALAR_SOLID), THICKNESS);
@@ -287,12 +302,12 @@ void MyDetecter::DrawTrafficSigns(Mat& imgSrc,TrafficSign traffic)
 Mat MyDetecter::CutTrafficSign(const Mat& imgSrc, TrafficSign& traffic) {
 
 	Point c = traffic.getCenTer();
-	int a = traffic.getLength() / 2;
+	Size size = traffic.getSize();
 	Range x(0, 0), y(0, 0);
-	x.start = (c.x - a >= 0) ? c.x - a : 0;
-	x.end = (c.x + a <= imgSrc.cols) ? c.x + a : imgSrc.cols;
-	y.start = (c.y - a >= 0) ? c.y - a : 0;
-	y.end = (c.y + a <= imgSrc.rows) ? c.y + a : imgSrc.rows;
+	x.start = (c.x - size.width / 2 >= 0) ? c.x - size.width / 2 : 0;
+	x.end = (c.x + size.width / 2 <= imgSrc.cols) ? c.x + size.width / 2 : imgSrc.cols;
+	y.start = (c.y - size.height / 2 >= 0) ? c.y - size.height / 2 : 0;
+	y.end = (c.y + size.height / 2 <= imgSrc.rows) ? c.y + size.height / 2 : imgSrc.rows;
 
 	Mat temp(imgSrc, y, x);
 	return temp;
