@@ -7,7 +7,7 @@ os.environ["CUDA_VISIBLE_DEVICES"]="/cpu:0"
 import matplotlib.image as mpimg
 
 image_depth = 1
-n_classes = 51
+n_classes = 15
 #n_classes = 10
 rate = 0.003
 x = tf.placeholder(tf.float32, (None, 32, 32, image_depth))
@@ -101,5 +101,4 @@ loader = tf.train.Saver()
 loader = tf.train.import_meta_graph("./lenet/lenet/lenet.meta")
 loader.restore(sess, "./lenet/lenet/lenet")
 print("import done.")
-
 
