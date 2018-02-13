@@ -13,15 +13,19 @@
 using namespace cv;
 using namespace std;
 //standard HSV
-#define SCARLAR_LOWER_RED_1 0,50,50//160, 200, 160
-#define SCARLAR_UPPER_RED_1 10,255,255//179, 255, 255
-#define SCARLAR_LOWER_RED_2 160,50,50//160, 200, 160
+#define SCARLAR_LOWER_RED_1 0,50,50//0,100,100//160, 200, 160
+#define SCARLAR_UPPER_RED_1 10,255,255//120,255,255//179, 255, 255
+#define SCARLAR_LOWER_RED_2 160,50,50////160,100,120//160, 200, 160
 #define SCARLAR_UPPER_RED_2 180,255,255//179, 255, 255
 //#define SCARLAR_LOWER_RED_3 135,50,50//160, 200, 160
 //#define SCARLAR_UPPER_RED_3 145,255,255//179, 255, 255
 
-#define SCARLAR_LOWER_BLUE 75, 128, 128//98,109,20//170, 0, 0
+//#define SCARLAR_LOWER_BLUE_1 90,220,120//75, 128, 128//98,109,20//170, 0, 0
+//#define SCARLAR_UPPER_BLUE_1 110,255,155//120, 255, 255//112,255,255//270,255,255
+
+#define SCARLAR_LOWER_BLUE 100, 120, 100//98,109,20//170, 0, 0
 #define SCARLAR_UPPER_BLUE 120, 255, 255//112,255,255//270,255,255
+
 
 #define SCARLAR_LOWER_YELLOW 20,100,100//22, 128, 128
 #define SCARLAR_UPPER_YELLOW 30,255,255//38, 255, 255
@@ -38,11 +42,12 @@ using namespace std;
 #define SCARLAR_LOWER_WHITE 110, 20, 200//110, 30, 225
 #define SCARLAR_UPPER_WHITE 160, 80, 255//160, 88, 250
 
-#define RATIO 1.75
+#define RATIO 1.4
 #define SCALAR_SOLID 0, 255, 0
 #define THICKNESS 1
 
-#define MINIMUM_SIZE 20
+#define MINIMUM_SIZE 30
+#define MINIMUM_ACCURACY 0.8
 class TrafficSign
 {
 	int id;
@@ -83,6 +88,6 @@ public:
 	static void DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& trafficSigns);
 	static void DrawTrafficSigns(Mat& imgSrc, TrafficSign traffic);
 	static Mat CutTrafficSign(const Mat& imgSrc, TrafficSign&);
-	static void SetLabel(Mat&, const TrafficSign&);
+	static void SetLabel(Mat&, const TrafficSign&, float acc = 0);
 };
 

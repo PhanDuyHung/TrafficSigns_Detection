@@ -101,6 +101,8 @@ void MyDetecter::FindSquares(const Mat& img, const  vector<Point>&contour, vecto
 			traffic.setCenTer(center);
 			int width = approx[1].x - approx[0].x;
 			int height = approx[3].x - approx[0].x;
+			if (width > height && width / height > RATIO) return;
+			if (width < height && height / width > RATIO) return;
 			traffic.setSize(Size(width,height));
 
 			if (traffic.getSize().width >= MINIMUM_SIZE && traffic.getSize().height >= MINIMUM_SIZE)
@@ -170,41 +172,45 @@ void MyDetecter::DetectTrafficSigns(const Mat& imgSrc, vector<TrafficSign>& traf
 	Mat img;
 	cvtColor(imgSrc, img, CV_BGR2HSV);
 
-	Mat imgRed, maskRed1, maskRed2, maskRed3, imgBlue, imgYellow, imgBlack, imgWhite, imgColor;
+	Mat imgRed, maskRed1, maskRed2, maskRed3, imgBlue,imgBlue1, imgYellow, imgBlack, imgWhite, mask;
 
 	inRange(img, Scalar(SCARLAR_LOWER_RED_1), Scalar(SCARLAR_UPPER_RED_1), maskRed1);
 	inRange(img, Scalar(SCARLAR_LOWER_RED_2), Scalar(SCARLAR_UPPER_RED_2), maskRed2);
-	//inRange(img, Scalar(SCARLAR_LOWER_RED_3), Scalar(SCARLAR_UPPER_RED_3), maskRed3);
 	add(maskRed1, maskRed2, imgRed);
-	//threshold(imgRed, imgRed, 127, 255, CV_THRESH_BINARY);
-	//add(imgRed, maskRed3, imgRed);
 
 	//inRange(img, Scalar(SCARLAR_LOWER_YELLOW), Scalar(SCARLAR_UPPER_YELLOW), imgYellow);
 	inRange(img, Scalar(SCARLAR_LOWER_BLUE), Scalar(SCARLAR_UPPER_BLUE), imgBlue);
-	//threshold(imgBlue, imgBlue, 127, 255, CV_THRESH_BINARY);
 
-	inRange(img, Scalar(SCARLAR_LOWER_WHITE), Scalar(SCARLAR_UPPER_WHITE), imgWhite);
+	//inRange(img, Scalar(SCARLAR_LOWER_WHITE), Scalar(SCARLAR_UPPER_WHITE), imgWhite);
 	//imshow("white", imgWhite);
 	//threshold(imgWhite, imgWhite, 127, 255, CV_THRESH_BINARY);
 	
 	//inRange(img, Scalar(SCARLAR_LOWER_BLACK), Scalar(SCARLAR_UPPER_BLACK), imgBlack);
-
-
-	add(imgRed, imgBlue, imgColor);
-	//add(imgColor, imgYellow, imgColor);
-	add(imgColor, imgWhite, imgColor);
-	//add(imgColor, imgBlack, imgColor);
-
-	threshold(imgColor, imgColor, 127, 255, CV_THRESH_BINARY);
+	//mask = imgBlue;
 	
+	add(imgRed, imgBlue, mask);
+
+	normalize(mask, mask, 0,  255, NORM_MINMAX);
+	//khử nhiễu
+	medianBlur(mask, mask, 5);
+	//xóa đối tượng nhỏ
+	Mat blured; GaussianBlur(mask, blured,Size(5,5),0);
+	//tách biên
+	Mat edge; Canny(blured, edge, 30, 150);
+	
+	//phóng to để nối liền ảnh
+	Mat kernel = getStructuringElement(MORPH_RECT, Size(2, 2));
+	Mat dilation; dilate(edge, dilation, kernel);
+
+	Mat img_detect;  threshold(dilation, img_detect, 127, 255, CV_THRESH_BINARY);
 	// find contours and store them all as a list
-	vector<vector<Point> >contours, contours_temp;
-	findContours(imgColor, contours, RETR_LIST, CHAIN_APPROX_SIMPLE);
+	vector<vector<Point> >contours;
+	findContours(img_detect, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
 	for each (vector<Point> contour in contours)
 	{
 		/*=============SQUARE=============*/
-		//FindSquares(img, contour, trafficSigns);
+		FindSquares(img, contour, trafficSigns);
 
 		/*===========TRIANGLE=============*/
 		//FindTriangles(img, contour, trafficSigns);
@@ -313,7 +319,7 @@ Mat MyDetecter::CutTrafficSign(const Mat& imgSrc, TrafficSign& traffic) {
 	return temp;
 }
 
-void MyDetecter::SetLabel(Mat& im, const TrafficSign& traffic)
+void MyDetecter::SetLabel(Mat& im, const TrafficSign& traffic, float acc)
 {
 	int fontface = cv::FONT_HERSHEY_SIMPLEX;
 	double scale = 0.5;
@@ -321,7 +327,8 @@ void MyDetecter::SetLabel(Mat& im, const TrafficSign& traffic)
 	int baseline = 0;
 	if (!Responses.empty())
 	{
-		string label = Responses[traffic.getId()];
+		string str_acc = to_string(acc);
+		string label = Responses[traffic.getId()] + " "+str_acc;
 		Point point = traffic.getCenTer();
 		cv::Size text = cv::getTextSize(label, fontface, scale, thickness, &baseline);
 		//cv::Rect r = cv::boundingRect(contour);
